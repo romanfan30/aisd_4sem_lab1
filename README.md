@@ -108,33 +108,58 @@
 
 ---
 
-## Структура кода (из отчёта)
+## Код (перенесён из листингов отчёта)
 
-Полные листинги — в самом [отчёте](algo_lab_1_4sem_.pdf) (стр. 16–55); в отчёте также
-указан репозиторий с кодом: https://github.com/romanfan30/algo_lab_1
+Полные листинги — в самом [отчёте](algo_lab_1_4sem_.pdf) (стр. 16–68). Файлы ниже
+восстановлены из листингов: имена модулей, структура и текст функций — как в отчёте.
 
 ```
-exercise1/rle.py          # RLE, в т.ч. вариант с настраиваемой длиной символа (ms/mc)
-exercise1/image_converter.py  # PNG/JPEG -> собственный RAW с метаданными
-exercise2/entropy.py      # расчёт энтропии для символов длиной 1..4 байта
-exercise2/huffman.py      # Хаффман: дерево, коды, упаковка битов, padding
+exercise1/image_converter.py    # PNG/JPEG -> RAW (тип 1 Б + ширина 4 Б + высота 4 Б)
+exercise1/rle.py                # RLE: базовый (8-битные коды) и с настраиваемыми Ms/Mc
+exercise2/entropy.py            # энтропия для символов длиной 1..4 байта + график
+exercise2/huffman.py            # Хаффман + арифметическое кодирование (в отчёте — в этом же файле)
 exercise2/canonical_huffman.py  # канонический Хаффман (передаются только длины кодов)
-exercise2/arithmetic.py   # арифметическое кодирование
-exercise2/bwt.py          # BWT через суффиксный массив + обратное преобразование
-exercise2/mtf.py          # move-to-front
-exercise3/lzss.py         # LZSS (скользящее окно, флаги, упаковка флагов в байты)
-exercise3/lz78_lzw.py     # LZ78 и LZW
-analysis/task1..task4     # эксперименты: энтропия/блок BWT, буфер LZSS,
-                          # словарь LZW, сравнение всех схем на файлах
+exercise2/bwt.py                # BWT через матрицу + RLE блоками, быстрое обратное BWT
+exercise2/mtf.py                # move-to-front (байты и UTF-8)
+exercise2/suffix_array.py       # суффиксный массив (простой и Манбера–Майерса)
+exercise2/efficient_bwt.py      # BWT через суффиксный массив
+exercise3/lz77.py               # LZ77
+exercise3/lzss.py               # LZSS (флаги упаковываются в байты)
+exercise3/lz78_lzw.py           # LZ78 и LZW
+analysis/task1.py               # энтропия BWT+MTF в зависимости от размера блока
+analysis/task2.py               # коэффициент сжатия LZSS от размера буфера
+analysis/task3.py               # коэффициент сжатия LZW от размера словаря
+analysis/task4.py               # сравнение всех 9 схем на тестовых файлах
+requirements.txt                # numpy, Pillow, matplotlib (только для RAW и графиков)
 ```
 
 ### Запуск
 
 ```bash
-python task1/to_raw.py     # PNG/JPEG -> RAW (нужен Pillow)
-python task1/RLE.py        # прогон RLE по тестовым файлам
-python task2/entropy.py    # энтропия vs длина символа (нужны matplotlib, текст рядом)
+python -m pip install -r requirements.txt
+
+# в каждом модуле алгоритма есть демонстрационный блок __main__
+python exercise1/rle.py
+python exercise2/bwt.py
+python exercise3/lzss.py
+
+# эксперименты: скрипты читают файл enwik7 из текущего каталога
+cd analysis
+python task1.py
 ```
 
-В скриптах пути к тестовым файлам заданы абсолютно (под Windows, `C:\lab1\...`) —
-перед запуском их нужно заменить на свои.
+### Особенности, перенесённые из отчёта «как есть»
+
+Код в отчёте местами содержит собственные шероховатости; они сохранены, чтобы версия
+в репозитории совпадала с листингами:
+
+* `rle_encode`: если уникальная серия длиннее 127 символов, в управляющий байт пишется
+  127, а данных дописывается больше — декодирование такого потока рассинхронизируется
+  (в отчёте RLE использовался только для замера размера).
+* `lz77_decode` пропускает байт `next_char == 0`, поэтому LZ77 не восстанавливает данные,
+  содержащие нулевые байты.
+* `bwt_encode_block` содержит отладочный `print(matrix)` (так в листинге).
+* `compressor_lzss` / `compressor_lzss_huffman` в `analysis/task4.py` не распаковывают
+  кортеж, который возвращает `lzss_encode`.
+* в листинге `analysis/task2.py` LZSS импортируется из `exercise3.lz77`, где этой функции
+  нет; здесь импорт исправлен на `exercise3.lzss` (так же, как в `task4.py`).
